@@ -4,17 +4,7 @@
 
 # Smooth Progress Bar for SD WebUI Forge Neo
 
-<p align="center">
-  <a href="https://github.com/Haoming02/sd-webui-forge-classic">
-    <img src="https://img.shields.io/badge/Forge-Neo-blue?style=flat" alt="Forge Neo">
-  </a>
-  <a href="LICENSE">
-    <img src="https://img.shields.io/github/license/diamfang/sd-webui-smooth-progress?color=blue&style=flat" alt="License">
-  </a>
-  <a href="https://github.com/diamfang/sd-webui-smooth-progress/releases">
-    <img src="https://img.shields.io/github/v/release/diamfang/sd-webui-smooth-progress?color=green&style=flat" alt="Version">
-  </a>
-</p>
+<p align="center"><a href="https://github.com/Haoming02/sd-webui-forge-classic"><img src="https://img.shields.io/badge/Forge-Neo-blue?style=flat" alt="Forge Neo"></a> &nbsp; <a href="LICENSE"><img src="https://img.shields.io/github/license/diamfang/sd-webui-smooth-progress?color=blue&style=flat" alt="License"></a> &nbsp; <a href="https://github.com/diamfang/sd-webui-smooth-progress/releases"><img src="https://img.shields.io/github/v/release/diamfang/sd-webui-smooth-progress?color=green&style=flat" alt="Version"></a></p>
 
 ![Smooth Progress Preview](images/preview.png)
 
