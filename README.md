@@ -56,9 +56,11 @@
 4. Click Install, then reload the WebUI
 
 > [!WARNING]
->This extension was tested only for Forge Neo. I cannot guarantee that it will work for Automatic1111 or Forge Classic.
-
-
+>This extension was tested only for Forge Neo. I cannot guarantee that it will work for 
 
 ## Credits
-* [Forge Neo](https://github.com/Haoming02/sd-webui-forge-classic/tree/neo) by Haoming02
+* Made for [Forge Neo](https://github.com/Haoming02/sd-webui-forge-classic/tree/neo) by Haoming02
+* Other plugin by me: [Output Folder Switcher](https://github.com/diamfang/sd-webui-folder-switcher)
+
+
+
