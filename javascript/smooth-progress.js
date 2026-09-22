@@ -48,6 +48,15 @@
     let fadeTimeoutId = null;
 	let completeTimeoutId = null;
     let isInterrupted = false;
+    // Server-side job identity (State.time_start, refreshed on every State.begin()).
+    let lastApiTimeStart = null;
+    // Job token captured when a generation attempt starts (generate click / new batch item).
+    // A completed state whose time_start differs from this anchor means the generation
+    // finished between two polls without us ever seeing an active state.
+    let generatingTimeStartAnchor = null;
+    // Mode 3 (Smooth < Accurate) monotonic ratchet: the desired target percent must
+    // never decrease within one server job (reset by triggerInitialCalculatingState).
+    let lastDesiredPctM3 = null;
 
     const barInstances = [];
 
@@ -591,6 +600,9 @@
         lastServerUpdateMs = 0;
         currentSpeedPctPerMs = 0;
         lastFrameTime = 0;
+        lastDesiredPctM3 = null;
+        // Remember which server job was known at the moment this generation attempt started.
+        generatingTimeStartAnchor = lastApiTimeStart;
 
         barInstances.forEach(inst => {
             // Disable transition temporarily for immediate reset to 0%
@@ -1718,7 +1730,15 @@
                 predictedExtrapolationPct = actualStepPct;
             }
 
-            const desiredTargetPct = Math.min(Math.max(actualStepPct, predictedExtrapolationPct), 99.2);
+            let desiredTargetPct = Math.min(Math.max(actualStepPct, predictedExtrapolationPct), 99.2);
+
+            // Monotonic within one job: each poll resets the extrapolation to zero, so the raw
+            // target sawtooths between polls and the bar visibly rolls back by a fraction of a
+            // percent. Clamp it so the displayed value only moves forward until a new job starts.
+            if (lastDesiredPctM3 !== null && desiredTargetPct < lastDesiredPctM3) {
+                desiredTargetPct = lastDesiredPctM3;
+            }
+            lastDesiredPctM3 = desiredTargetPct;
 
             const lagDifference = desiredTargetPct - visualPct;
             let lerpFactor = 0.08;
@@ -1770,18 +1790,59 @@
             if (!res.ok) return;
             const data = await res.json();
 
+            // Track the server-side job start timestamp so we can tell whether a new job
+            // has started since our previous poll (State.begin() refreshes it on every
+            // new generation / batch item).
+            const prevApiTimeStart = lastApiTimeStart;
+            if (typeof data.time_start !== 'undefined' && data.time_start !== null) {
+                lastApiTimeStart = data.time_start;
+            }
+
             // Handle backend interrupt flag
             if (data.interrupted) {
-                if (isGenerating && (visualPct > 0 || lastServerUpdateMs > 0)) {
-                    triggerInterruptedState();
+                if (isGenerating && !isCompleting && !isInterrupted) {
+                    if (visualPct > 0 || lastServerUpdateMs > 0) {
+                        triggerInterruptedState();
+                    } else if (typeof data.time_start !== 'undefined' &&
+                               data.time_start !== generatingTimeStartAnchor) {
+                        // The generation was interrupted/skipped so quickly that we never saw an
+                        // active state. Jump straight to the interrupted UI state so the red
+                        // styling and fade-out still fire. The time_start guard suppresses stale
+                        // flags from a previously interrupted job during new-job preprocessing.
+                        currentStep = data.step || 0;
+                        totalSteps = data.total_steps || 0;
+                        triggerInterruptedState();
+                    }
                 }
                 return;
             }
 
-            // Handle inactive state
-            if (!data.active || (data.step === 0 && data.progress === 0)) {
+            // Handle inactive state.
+            // Stale-active shield: after a generation ends the backend can keep reporting
+            // active:true with frozen step/progress values because the "active" formula does
+            // not notice State.end(). Such polls must be treated as inactive here (before
+            // the batch-item / normal-progress logic below), otherwise they freeze the bar
+            // at stale values such as "0/0 0% ?".
+            if (!data.active || data.job_running === false || (data.step === 0 && data.progress === 0)) {
 				if (isGenerating && !isCompleting && !isInterrupted) {
 					if (visualPct > 0 || lastServerUpdateMs > 0) {
+						completeAnimation();
+						} else if (typeof data.time_start !== 'undefined' &&
+								data.time_start !== generatingTimeStartAnchor &&
+								(data.job_running === false ||
+									(data.total_steps > 0 && data.progress >= 1.0))) {
+						// Generation ended between two polls without us ever seeing an active
+						// state (bar and text were still at their initial values). Both terminal
+						// signals are keyed on time_start being refreshed by State.begin() for
+						// this job attempt:
+						//   - job_running === false: the backend cleared state.job (State.end()),
+						//     the reliable end-of-job signal - frozen step/progress can be < 1.0
+						//     (e.g. a single-step job that finished before our next poll).
+						//   - progress >= 1.0 with total_steps > 0: legacy signal, kept for
+						//     servers that do not report job_running yet.
+						// Skip interpolation and jump straight to the completed/fade-out state.
+						currentStep = data.step || 0;
+						totalSteps = data.total_steps || 0;
 						completeAnimation();
 					}
 				} else if (!isGenerating && !isInterrupted && (FINISH_KEYS[finishBehaviorIdx] === 'keep' || FINISH_KEYS[finishBehaviorIdx] === 'fade_text_only') && !isFinished) {
@@ -1794,9 +1855,15 @@
 			}
 
             // --- Detect new item start in a batch ---
+            // A new run/item starts when the previous one was marked finished/interrupted/completing,
+            // the step counter moved backwards, the total step count changed between polls, or the
+            // server started a new job (time_start refreshed by State.begin()) since our previous poll.
+            // NOTE: the old heuristic "(step <= 1 && visualPct > 10)" was removed — it fired on
+            // legitimate early steps of fast generations and caused backward rollback resets.
             const isNewBatchItem = (isFinished || isInterrupted || isCompleting) || 
-                                   (data.step < currentStep) || 
-                                   (data.step <= 1 && visualPct > 10);
+                                   (data.step < currentStep) ||
+                                   (totalSteps > 0 && data.total_steps > 0 && data.total_steps !== totalSteps) ||
+                                   (prevApiTimeStart !== null && typeof data.time_start !== 'undefined' && data.time_start !== prevApiTimeStart);
 
             if (isNewBatchItem) {
                 if (fadeTimeoutId) {
