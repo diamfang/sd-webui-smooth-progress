@@ -33,7 +33,7 @@
 </details>
 
 <details id="v1-0-0">
-<summary><b>v1.0.0 — Initial Release</b></summary>
+<summary><b>v1.0.0 - Initial Release</b></summary>
 
 * **Core Features**
   * Added customizable progress bar animation with adjustable **Smoothness** levels.
