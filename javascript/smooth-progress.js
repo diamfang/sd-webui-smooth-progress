@@ -1590,6 +1590,24 @@
                 }
             });
             updateOverlayTextFormatted(100, 0);
+        } else if (!isGenerating && !isCompleting && (activeFinish === 'keep' || activeFinish === 'fade_text_only')) {
+            // Idle state before the first generation (fresh app launch / page reload):
+            // in "Keep Everything" and "Fade Out (Only Text)" modes the bar must stay
+            // visible even when there is no completed job yet to restore.
+            barInstances.forEach(inst => {
+                inst.progressFill.style.setProperty('width', '100%', 'important');
+                applyProgressBarStyle(inst.progressFill);
+
+                inst.progressFill.classList.remove('spb-fade-out', 'spb-pulse', 'spb-pulse-red', 'spb-smooth-complete');
+                inst.progressFill.classList.add('spb-active');
+                inst.progressFill.style.opacity = '1';
+
+                inst.textOverlay.textContent = '';
+                inst.lastText = '';
+                inst.textOverlay.classList.remove('spb-active');
+                inst.textOverlay.classList.add('spb-fade-out');
+                inst.textOverlay.style.opacity = '0';
+            });
         }
     }
 

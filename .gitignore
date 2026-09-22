@@ -3,4 +3,4 @@ __pycache__/
 .idea/
 .vscode/
 .DS_Store
-test/smooth-progress.test.js
+test/
