@@ -23,10 +23,17 @@
 
 
 ## Changelog
+<details id="v1-0-1">
+<summary><b>v1.0.1 - Fixed & tweaks</b></summary>
+
+* Fix progress freeze on ultra-fast generations
+* Fix Smooth Progress ETA: per-step duration tracker prevents rising timer and jitter
+* Widen Animation Speed range to 1-20s, Fade Out Duration max to 4s
+* Show progress bar at startup before first generation in Keep Everything / Fade Out (Only Text) modes
+</details>
 
 <details id="v1-0-0">
 <summary><b>v1.0.0 — Initial Release</b></summary>
-<br>
 
 * **Core Features**
   * Added customizable progress bar animation with adjustable **Smoothness** levels.
