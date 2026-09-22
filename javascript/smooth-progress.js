@@ -1,9 +1,11 @@
 (function () {
     let animFrameId = null;
     let pollTimer = null;
-    let animSpeedSec = parseFloat(localStorage.getItem('spb_anim_speed')) || 3.0;
+    // Clamp persisted values into the current slider ranges so stale out-of-range
+    // settings (saved before the bounds changed) can't silently keep applying.
+    let animSpeedSec = Math.min(20.0, Math.max(1.0, parseFloat(localStorage.getItem('spb_anim_speed')) || 3.0));
     let barHeightScale = parseFloat(localStorage.getItem('spb_bar_height')) || 1.0;
-    let fadeDurationSec = parseFloat(localStorage.getItem('spb_fade_duration')) || 0.4;
+    let fadeDurationSec = Math.min(4.0, Math.max(0.1, parseFloat(localStorage.getItem('spb_fade_duration')) || 0.4));
     
     // --- Smoothness Mode State ---
     // 0: Smooth > Accurate (Mode 1)
@@ -1038,8 +1040,8 @@
         const speedInput = document.createElement('input');
         speedInput.type = 'range';
         speedInput.className = 'spb-range-input spb-speed-input';
-        speedInput.min = '0.5';
-        speedInput.max = '10.0';
+        speedInput.min = '1.0';
+        speedInput.max = '20.0';
         speedInput.step = '0.5';
         speedInput.value = animSpeedSec;
 
@@ -1083,7 +1085,7 @@
         fadeInput.type = 'range';
         fadeInput.className = 'spb-range-input spb-fade-input';
         fadeInput.min = '0.1';
-        fadeInput.max = '2.0';
+        fadeInput.max = '4.0';
         fadeInput.step = '0.1';
         fadeInput.value = fadeDurationSec;
 
