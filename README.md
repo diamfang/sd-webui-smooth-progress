@@ -24,7 +24,7 @@
 
 ## Changelog
 <details id="v1-0-1">
-<summary><b>v1.0.1 - Fixed & tweaks</b></summary>
+<summary><b>v1.0.1 - Fixes & tweaks</b></summary>
 
 * Fix progress freeze on ultra-fast generations
 * Fix Smooth Progress ETA: per-step duration tracker prevents rising timer and jitter
@@ -63,7 +63,7 @@
 4. Click Install, then reload the WebUI
 
 > [!WARNING]
->This extension was tested only for Forge Neo. I cannot guarantee that it will work for 
+>This extension was tested only for Forge Neo. I cannot guarantee that it will work for Automatic1111 or Forge Classic.
 
 ## Credits
 * Made for [Forge Neo](https://github.com/Haoming02/sd-webui-forge-classic/tree/neo) by Haoming02
